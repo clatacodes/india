@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indian Subcontinent — Religion &amp; Language Explorer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <h1>Indian Subcontinent Explorer</h1>
+  <p class="subtitle">Religion &amp; language data by state / country — click a point on the map</p>
+</header>
+
+<main class="layout">
+
+  <aside class="sidebar">
+    <h2>Filters</h2>
+
+    <label for="search">Search by name</label>
+    <input type="text" id="search" placeholder="e.g. Kerala">
+
+    <label for="religion-filter">Filter by majority religion</label>
+    <select id="religion-filter">
+      <option value="">All religions</option>
+    </select>
+
+    <label for="language-filter">Filter by language spoken</label>
+    <select id="language-filter">
+      <option value="">All languages</option>
+    </select>
+
+    <button id="reset-btn">Reset filters</button>
+
+    <div class="legend">
+      <h3>Legend</h3>
+      <ul id="legend-list"></ul>
+    </div>
+
+    <p class="match-count" id="match-count"></p>
+  </aside>
+<!--map-->
+  <section class="map-wrap">
+    <svg id="map" viewBox="0 0 620 700" xmlns="http://www.w3.org/2000/svg">
+      <!-- region dots injected by script.js -->
+    </svg>
+  </section>
+
+  <aside class="info-panel" id="info-panel">
+    <div class="info-empty">
+      <p>Click a region on the map to see details here.</p>
+    </div>
+  </aside>
+
+</main>
+
+<footer class="site-footer">
+  <p>Data is approximate / general-reference figures for demonstration purposes, not official census output.</p>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
