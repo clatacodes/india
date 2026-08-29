@@ -1,393 +1,285 @@
 
 
-const REGIONS = [
-  {
-    id: "jk",
-    name: "Jammu & Kashmir",
-    country: "India",
+const STATE_DATA = {
+  "Jammu and Kashmir": {
     capital: "Srinagar / Jammu",
     population: "~13.6 million",
     majorReligion: "Islam",
     religions: { Islam: 68, Hinduism: 28, Sikhism: 2, Buddhism: 1, Other: 1 },
-    languages: ["Kashmiri", "Dogri", "Urdu", "Ladakhi"],
-    x: 230, y: 140
+    languages: ["Kashmiri", "Dogri", "Urdu"]
   },
-  {
-    id: "ladakh",
-    name: "Ladakh",
-    country: "India",
+  "Ladakh": {
     capital: "Leh",
     population: "~0.3 million",
     majorReligion: "Buddhism",
     religions: { Buddhism: 46, Islam: 46, Hinduism: 6, Other: 2 },
-    languages: ["Ladakhi", "Tibetan", "Urdu"],
-    x: 300, y: 110
+    languages: ["Ladakhi", "Tibetan", "Urdu"]
   },
-  {
-    id: "hp",
-    name: "Himachal Pradesh",
-    country: "India",
+  "Himachal Pradesh": {
     capital: "Shimla",
     population: "~7.3 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 95, Sikhism: 2, Buddhism: 1, Islam: 1, Other: 1 },
-    languages: ["Hindi", "Pahari", "Kangri"],
-    x: 275, y: 195
+    languages: ["Hindi", "Pahari"]
   },
-  {
-    id: "pb",
-    name: "Punjab",
-    country: "India",
+  "Punjab": {
     capital: "Chandigarh",
     population: "~30 million",
     majorReligion: "Sikhism",
     religions: { Sikhism: 58, Hinduism: 39, Islam: 2, Other: 1 },
-    languages: ["Punjabi"],
-    x: 220, y: 215
+    languages: ["Punjabi"]
   },
-  {
-    id: "uk",
-    name: "Uttarakhand",
-    country: "India",
+  "Chandigarh": {
+    capital: "Chandigarh",
+    population: "~1.1 million",
+    majorReligion: "Hinduism",
+    religions: { Hinduism: 78, Sikhism: 13, Islam: 5, Other: 4 },
+    languages: ["Punjabi", "Hindi"]
+  },
+  "Uttarakhand": {
     capital: "Dehradun",
     population: "~11 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 83, Islam: 14, Sikhism: 2, Other: 1 },
-    languages: ["Hindi", "Garhwali", "Kumaoni"],
-    x: 315, y: 225
+    languages: ["Hindi", "Garhwali", "Kumaoni"]
   },
-  {
-    id: "hr",
-    name: "Haryana",
-    country: "India",
+  "Haryana": {
     capital: "Chandigarh",
     population: "~28.9 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 87, Islam: 7, Sikhism: 5, Other: 1 },
-    languages: ["Hindi", "Haryanvi", "Punjabi"],
-    x: 245, y: 245
+    languages: ["Hindi", "Haryanvi", "Punjabi"]
   },
-  {
-    id: "dl",
-    name: "Delhi (NCT)",
-    country: "India",
+  "NCT of Delhi": {
     capital: "New Delhi",
     population: "~19 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 82, Islam: 13, Sikhism: 3, Jainism: 1, Other: 1 },
-    languages: ["Hindi", "Punjabi", "Urdu"],
-    x: 262, y: 250
+    languages: ["Hindi", "Punjabi", "Urdu"]
   },
-  {
-    id: "rj",
-    name: "Rajasthan",
-    country: "India",
+  "Rajasthan": {
     capital: "Jaipur",
     population: "~77 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 88, Islam: 9, Jainism: 1, Sikhism: 1, Other: 1 },
-    languages: ["Hindi", "Rajasthani", "Marwari"],
-    x: 190, y: 290
+    languages: ["Hindi", "Rajasthani", "Marwari"]
   },
-  {
-    id: "up",
-    name: "Uttar Pradesh",
-    country: "India",
+  "Uttar Pradesh": {
     capital: "Lucknow",
     population: "~230 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 80, Islam: 19, Other: 1 },
-    languages: ["Hindi", "Urdu", "Awadhi", "Bhojpuri"],
-    x: 330, y: 280
+    languages: ["Hindi", "Urdu", "Awadhi", "Bhojpuri"]
   },
-  {
-    id: "br",
-    name: "Bihar",
-    country: "India",
+  "Bihar": {
     capital: "Patna",
     population: "~125 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 82, Islam: 17, Other: 1 },
-    languages: ["Hindi", "Bhojpuri", "Maithili", "Magahi"],
-    x: 405, y: 285
+    languages: ["Hindi", "Bhojpuri", "Maithili", "Magahi"]
   },
-  {
-    id: "sk",
-    name: "Sikkim",
-    country: "India",
+  "Sikkim": {
     capital: "Gangtok",
     population: "~0.6 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 58, Buddhism: 27, Christianity: 10, Other: 5 },
-    languages: ["Nepali", "Sikkimese", "Lepcha"],
-    x: 435, y: 255
+    languages: ["Nepali", "Sikkimese", "Lepcha"]
   },
-  {
-    id: "wb",
-    name: "West Bengal",
-    country: "India",
+  "West Bengal": {
     capital: "Kolkata",
     population: "~99 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 70, Islam: 27, Christianity: 1, Other: 2 },
-    languages: ["Bengali", "Hindi", "Santali"],
-    x: 445, y: 325
+    languages: ["Bengali", "Hindi", "Santali"]
   },
-  {
-    id: "jh",
-    name: "Jharkhand",
-    country: "India",
+  "Jharkhand": {
     capital: "Ranchi",
     population: "~38 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 68, Islam: 14, Christianity: 4, Other: 14 },
-    languages: ["Hindi", "Santali", "Bengali"],
-    x: 395, y: 335
+    languages: ["Hindi", "Santali", "Bengali"]
   },
-  {
-    id: "as",
-    name: "Assam",
-    country: "India",
+  "Assam": {
     capital: "Dispur",
     population: "~35 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 61, Islam: 34, Christianity: 4, Other: 1 },
-    languages: ["Assamese", "Bengali", "Bodo"],
-    x: 490, y: 275
+    languages: ["Assamese", "Bengali", "Bodo"]
   },
-  {
-    id: "ml",
-    name: "Meghalaya",
-    country: "India",
+  "Meghalaya": {
     capital: "Shillong",
     population: "~3.4 million",
     majorReligion: "Christianity",
     religions: { Christianity: 75, Hinduism: 12, Islam: 4, Other: 9 },
-    languages: ["Khasi", "Garo", "English"],
-    x: 475, y: 295
+    languages: ["Khasi", "Garo", "English"]
   },
-  {
-    id: "nl",
-    name: "Nagaland",
-    country: "India",
+  "Nagaland": {
     capital: "Kohima",
     population: "~2.2 million",
     majorReligion: "Christianity",
     religions: { Christianity: 88, Hinduism: 9, Other: 3 },
-    languages: ["Naga languages", "English", "Nagamese"],
-    x: 520, y: 270
+    languages: ["Naga languages", "English", "Nagamese"]
   },
-  {
-    id: "mn",
-    name: "Manipur",
-    country: "India",
+  "Manipur": {
     capital: "Imphal",
     population: "~3.1 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 41, Christianity: 41, Islam: 8, Other: 10 },
-    languages: ["Meitei (Manipuri)", "English"],
-    x: 515, y: 300
+    languages: ["Meitei (Manipuri)", "English"]
   },
-  {
-    id: "mz",
-    name: "Mizoram",
-    country: "India",
+  "Mizoram": {
     capital: "Aizawl",
     population: "~1.2 million",
     majorReligion: "Christianity",
     religions: { Christianity: 87, Buddhism: 8, Hinduism: 3, Other: 2 },
-    languages: ["Mizo", "English"],
-    x: 500, y: 325
+    languages: ["Mizo", "English"]
   },
-  {
-    id: "tr",
-    name: "Tripura",
-    country: "India",
+  "Tripura": {
     capital: "Agartala",
     population: "~4 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 84, Islam: 8, Christianity: 4, Other: 4 },
-    languages: ["Bengali", "Kokborok"],
-    x: 470, y: 335
+    languages: ["Bengali", "Kokborok"]
   },
-  {
-    id: "mp",
-    name: "Madhya Pradesh",
-    country: "India",
+  "Arunachal Pradesh": {
+    capital: "Itanagar",
+    population: "~1.6 million",
+    majorReligion: "Christianity",
+    religions: { Christianity: 30, Hinduism: 29, "Indigenous faiths": 26, Buddhism: 12, Other: 3 },
+    languages: ["Nyishi", "Adi", "English", "Hindi"]
+  },
+  "Madhya Pradesh": {
     capital: "Bhopal",
     population: "~85 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 91, Islam: 7, Other: 2 },
-    languages: ["Hindi", "Malvi", "Bundeli"],
-    x: 295, y: 355
+    languages: ["Hindi", "Malvi", "Bundeli"]
   },
-  {
-    id: "cg",
-    name: "Chhattisgarh",
-    country: "India",
+  "Chhattisgarh": {
     capital: "Raipur",
     population: "~29 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 93, Islam: 2, Christianity: 2, Other: 3 },
-    languages: ["Hindi", "Chhattisgarhi"],
-    x: 355, y: 375
+    languages: ["Hindi", "Chhattisgarhi"]
   },
-  {
-    id: "gj",
-    name: "Gujarat",
-    country: "India",
+  "Gujarat": {
     capital: "Gandhinagar",
     population: "~63 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 89, Islam: 9, Jainism: 1, Other: 1 },
-    languages: ["Gujarati", "Hindi"],
-    x: 150, y: 355
+    languages: ["Gujarati", "Hindi"]
   },
-  {
-    id: "mh",
-    name: "Maharashtra",
-    country: "India",
+  "Dadra and Nagar Haveli and Daman and Diu": {
+    capital: "Daman",
+    population: "~0.6 million",
+    majorReligion: "Hinduism",
+    religions: { Hinduism: 92, Islam: 3, Christianity: 3, Other: 2 },
+    languages: ["Gujarati", "Hindi", "Konkani"]
+  },
+  "Maharashtra": {
     capital: "Mumbai",
     population: "~123 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 80, Islam: 12, Buddhism: 6, Other: 2 },
-    languages: ["Marathi", "Hindi"],
-    x: 235, y: 425
+    languages: ["Marathi", "Hindi"]
   },
-  {
-    id: "od",
-    name: "Odisha",
-    country: "India",
+  "Odisha": {
     capital: "Bhubaneswar",
     population: "~46 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 94, Christianity: 2, Islam: 2, Other: 2 },
-    languages: ["Odia"],
-    x: 405, y: 405
+    languages: ["Odia"]
   },
-  {
-    id: "tg",
-    name: "Telangana",
-    country: "India",
+  "Telangana": {
     capital: "Hyderabad",
     population: "~39 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 85, Islam: 13, Other: 2 },
-    languages: ["Telugu", "Urdu"],
-    x: 295, y: 450
+    languages: ["Telugu", "Urdu"]
   },
-  {
-    id: "ap",
-    name: "Andhra Pradesh",
-    country: "India",
+  "Andhra Pradesh": {
     capital: "Amaravati",
     population: "~53 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 90, Islam: 7, Christianity: 2, Other: 1 },
-    languages: ["Telugu"],
-    x: 315, y: 490
+    languages: ["Telugu"]
   },
-  {
-    id: "ka",
-    name: "Karnataka",
-    country: "India",
+  "Karnataka": {
     capital: "Bengaluru",
     population: "~67 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 84, Islam: 13, Christianity: 2, Other: 1 },
-    languages: ["Kannada"],
-    x: 245, y: 490
+    languages: ["Kannada"]
   },
-  {
-    id: "ga",
-    name: "Goa",
-    country: "India",
+  "Goa": {
     capital: "Panaji",
     population: "~1.5 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 66, Christianity: 25, Islam: 8, Other: 1 },
-    languages: ["Konkani", "Marathi"],
-    x: 215, y: 470
+    languages: ["Konkani", "Marathi"]
   },
-  {
-    id: "kl",
-    name: "Kerala",
-    country: "India",
+  "Kerala": {
     capital: "Thiruvananthapuram",
     population: "~35 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 55, Islam: 27, Christianity: 18 },
-    languages: ["Malayalam"],
-    x: 235, y: 565
+    languages: ["Malayalam"]
   },
-  {
-    id: "tn",
-    name: "Tamil Nadu",
-    country: "India",
+  "Tamil Nadu": {
     capital: "Chennai",
     population: "~72 million",
     majorReligion: "Hinduism",
     religions: { Hinduism: 88, Christianity: 6, Islam: 6 },
-    languages: ["Tamil"],
-    x: 285, y: 565
+    languages: ["Tamil"]
   },
-  {
-    id: "pk",
-    name: "Pakistan",
-    country: "Pakistan",
-    capital: "Islamabad",
-    population: "~240 million",
-    majorReligion: "Islam",
-    religions: { Islam: 96, Hinduism: 2, Christianity: 1, Other: 1 },
-    languages: ["Urdu", "Punjabi", "Sindhi", "Pashto"],
-    x: 110, y: 220
-  },
-  {
-    id: "np",
-    name: "Nepal",
-    country: "Nepal",
-    capital: "Kathmandu",
-    population: "~30 million",
+  "Puducherry": {
+    capital: "Puducherry",
+    population: "~1.4 million",
     majorReligion: "Hinduism",
-    religions: { Hinduism: 81, Buddhism: 9, Islam: 4, Other: 6 },
-    languages: ["Nepali", "Maithili", "Bhojpuri"],
-    x: 355, y: 235
+    religions: { Hinduism: 87, Christianity: 7, Islam: 6 },
+    languages: ["Tamil", "French", "Telugu"]
   },
-  {
-    id: "bt",
-    name: "Bhutan",
-    country: "Bhutan",
-    capital: "Thimphu",
-    population: "~0.8 million",
-    majorReligion: "Buddhism",
-    religions: { Buddhism: 75, Hinduism: 23, Other: 2 },
-    languages: ["Dzongkha", "Nepali"],
-    x: 465, y: 235
-  },
-  {
-    id: "bd",
-    name: "Bangladesh",
-    country: "Bangladesh",
-    capital: "Dhaka",
-    population: "~173 million",
+  "Lakshadweep": {
+    capital: "Kavaratti",
+    population: "~0.07 million",
     majorReligion: "Islam",
-    religions: { Islam: 91, Hinduism: 8, Other: 1 },
-    languages: ["Bengali"],
-    x: 445, y: 355
+    religions: { Islam: 96, Hinduism: 3, Other: 1 },
+    languages: ["Malayalam", "Jeseri"]
   },
-  {
-    id: "lk",
-    name: "Sri Lanka",
-    country: "Sri Lanka",
-    capital: "Colombo / Sri Jayawardenepura Kotte",
-    population: "~22 million",
-    majorReligion: "Buddhism",
-    religions: { Buddhism: 70, Hinduism: 13, Islam: 10, Christianity: 7 },
-    languages: ["Sinhala", "Tamil"],
-    x: 280, y: 630
+  "Andaman and Nicobar": {
+    capital: "Port Blair",
+    population: "~0.4 million",
+    majorReligion: "Hinduism",
+    religions: { Hinduism: 69, Christianity: 21, Islam: 8, Other: 2 },
+    languages: ["Hindi", "Bengali", "Tamil", "Nicobarese"]
   }
-];
+};
+
+const NAME_ALIASES = {
+  "Delhi": "NCT of Delhi",
+  "Orissa": "Odisha",
+  "Pondicherry": "Puducherry",
+  "Uttaranchal": "Uttarakhand",
+  "Jammu & Kashmir": "Jammu and Kashmir",
+  "Andaman & Nicobar Islands": "Andaman and Nicobar",
+  "Andaman and Nicobar Islands": "Andaman and Nicobar",
+  "Dadra and Nagar Haveli": "Dadra and Nagar Haveli and Daman and Diu",
+  "Daman and Diu": "Dadra and Nagar Haveli and Daman and Diu"
+};
+
+function resolveStateName(rawName) {
+  if (!rawName) return null;
+  const trimmed = rawName.trim();
+  if (STATE_DATA[trimmed]) return trimmed;
+  if (NAME_ALIASES[trimmed]) return NAME_ALIASES[trimmed];
+  // last resort: case-insensitive match
+  const lower = trimmed.toLowerCase();
+  const found = Object.keys(STATE_DATA).find(k => k.toLowerCase() === lower);
+  return found || trimmed;
+}
 
 const ALL_RELIGIONS = ["Hinduism", "Islam", "Christianity", "Sikhism", "Buddhism", "Jainism"];
 
-const ALL_LANGUAGES = [...new Set(REGIONS.flatMap(r => r.languages))].sort();
+const ALL_LANGUAGES = [...new Set(
+  Object.values(STATE_DATA).flatMap(s => s.languages)
+)].sort();
