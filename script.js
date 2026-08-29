@@ -1,215 +1,267 @@
 
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-const svg = document.getElementById("map");
-const religionFilter = document.getElementById("religion-filter");
-const languageFilter = document.getElementById("language-filter");
-const searchBox = document.getElementById("search");
+const TOPOLOGY_URL = "https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@2884453/topojson/india.json";
+
+const svg = d3.select("#map");
+const g = svg.append("g").attr("class", "states-layer");
+const tooltip = document.getElementById("tooltip");
+const mapCanvas = document.getElementById("map-canvas");
+const detailPanel = document.getElementById("detail-panel");
+const religionChipsEl = document.getElementById("religion-chips");
+const languageFilterEl = document.getElementById("language-filter");
+const legendListEl = document.getElementById("legend-list");
+const searchEl = document.getElementById("search");
 const resetBtn = document.getElementById("reset-btn");
-const infoPanel = document.getElementById("info-panel");
-const matchCount = document.getElementById("match-count");
-const legendList = document.getElementById("legend-list");
 
-let selectedId = null;
-
-
-ALL_RELIGIONS.forEach(r => {
-  const opt = document.createElement("option");
-  opt.value = r;
-  opt.textContent = r;
-  religionFilter.appendChild(opt);
-});
-
-ALL_LANGUAGES.forEach(l => {
-  const opt = document.createElement("option");
-  opt.value = l;
-  opt.textContent = l;
-  languageFilter.appendChild(opt);
-});
-
-
-ALL_RELIGIONS.forEach(r => {
-  const li = document.createElement("li");
-  const swatch = document.createElement("span");
-  swatch.className = "swatch";
-  swatch.style.backgroundColor = getComputedStyle(document.documentElement)
-    .getPropertyValue(`--religion-${r}`);
-  li.appendChild(swatch);
-  li.appendChild(document.createTextNode(r));
-  legendList.appendChild(li);
-});
-
+let path, projection, zoomBehavior;
+let selectedName = null;
+let activeReligion = "";
+let activeLanguage = "";
 
 function religionColor(name) {
   const v = getComputedStyle(document.documentElement)
     .getPropertyValue(`--religion-${name}`);
   return v ? v.trim() : getComputedStyle(document.documentElement)
-    .getPropertyValue("--religion-Other").trim();
+    .getPropertyValue("--religion-default").trim();
 }
 
-function buildMap() {
-  REGIONS.forEach(region => {
-    const dot = document.createElementNS(SVG_NS, "circle");
-    dot.setAttribute("cx", region.x);
-    dot.setAttribute("cy", region.y);
-    dot.setAttribute("r", 9);
-    dot.setAttribute("fill", religionColor(region.majorReligion));
-    dot.classList.add("region-dot");
-    dot.dataset.id = region.id;
-    dot.addEventListener("click", () => selectRegion(region.id));
-    svg.appendChild(dot);
 
-    const label = document.createElementNS(SVG_NS, "text");
-    label.setAttribute("x", region.x);
-    label.setAttribute("y", region.y - 12);
-    label.classList.add("region-label");
-    label.dataset.id = region.id;
-    label.textContent = region.name;
-    svg.appendChild(label);
+function buildReligionChips() {
+  religionChipsEl.innerHTML = "";
+  ALL_RELIGIONS.forEach(r => {
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.type = "button";
+    chip.dataset.religion = r;
+    chip.innerHTML = `<span class="dot" style="background-color:${religionColor(r)}"></span>${r}`;
+    chip.addEventListener("click", () => {
+      activeReligion = activeReligion === r ? "" : r;
+      buildReligionChips();
+      applyFilters();
+    });
+    if (activeReligion === r) chip.classList.add("active");
+    religionChipsEl.appendChild(chip);
   });
 }
 
-buildMap();
-
-
-function currentFilters() {
-  return {
-    religion: religionFilter.value,
-    language: languageFilter.value,
-    search: searchBox.value.trim().toLowerCase()
-  };
+function buildLanguageOptions() {
+  languageFilterEl.innerHTML = '<option value="">Any language</option>';
+  ALL_LANGUAGES.forEach(l => {
+    const opt = document.createElement("option");
+    opt.value = l;
+    opt.textContent = l;
+    languageFilterEl.appendChild(opt);
+  });
 }
 
-function regionMatches(region, filters) {
-  if (filters.religion && region.majorReligion !== filters.religion) return false;
-  if (filters.language && !region.languages.includes(filters.language)) return false;
-  if (filters.search && !region.name.toLowerCase().includes(filters.search)) return false;
-  return true;
+function buildLegend() {
+  legendListEl.innerHTML = "";
+  ALL_RELIGIONS.forEach(r => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="dot" style="background-color:${religionColor(r)}"></span>${r}`;
+    legendListEl.appendChild(li);
+  });
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="dot" style="background-color:${religionColor("Other")}"></span>Other / mixed`;
+  legendListEl.appendChild(li);
 }
+
+buildReligionChips();
+buildLanguageOptions();
+buildLegend();
+
+
+fetch(TOPOLOGY_URL)
+  .then(res => res.json())
+  .then(topology => {
+    const districtsObj = topology.objects.districts;
+    const geoms = districtsObj.geometries;
+
+    // Group district geometries by their state name
+    const byState = new Map();
+    geoms.forEach(geom => {
+      const name = geom.properties && geom.properties.st_nm;
+      if (!name) return;
+      if (!byState.has(name)) byState.set(name, []);
+      byState.get(name).push(geom);
+    });
+
+    const features = [];
+    byState.forEach((stateGeoms, name) => {
+      const merged = topojson.merge(topology, stateGeoms);
+      features.push({
+        type: "Feature",
+        properties: { st_nm: name },
+        geometry: merged
+      });
+    });
+
+    const featureCollection = { type: "FeatureCollection", features };
+    drawMap(featureCollection);
+  })
+  .catch(err => {
+    mapCanvas.innerHTML =
+      '<p style="padding:40px;text-align:center;color:#8a3b3b;">' +
+      "Could not load the map data. Please check your connection and reload." +
+      "</p>";
+    console.error(err);
+  });
+
+function drawMap(featureCollection) {
+  const bounds = mapCanvas.getBoundingClientRect();
+  const width = bounds.width;
+  const height = bounds.height;
+
+  svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+  projection = d3.geoMercator().fitSize([width * 0.94, height * 0.94], featureCollection);
+
+  const [[x0, y0], [x1, y1]] = d3.geoPath(projection).bounds(featureCollection);
+  const usedW = x1 - x0, usedH = y1 - y0;
+  const offsetX = (width - usedW) / 2 - x0;
+  const offsetY = (height - usedH) / 2 - y0;
+  projection.translate([
+    projection.translate()[0] + offsetX,
+    projection.translate()[1] + offsetY
+  ]);
+
+  path = d3.geoPath(projection);
+
+  g.selectAll("path")
+    .data(featureCollection.features, d => d.properties.st_nm)
+    .join("path")
+    .attr("class", "state-shape")
+    .attr("d", path)
+    .attr("fill", d => {
+      const resolved = resolveStateName(d.properties.st_nm);
+      const info = STATE_DATA[resolved];
+      return info ? religionColor(info.majorReligion) : religionColor("Other");
+    })
+    .attr("data-name", d => d.properties.st_nm)
+    .on("mousemove", (event, d) => showTooltip(event, d))
+    .on("mouseleave", hideTooltip)
+    .on("click", (event, d) => selectState(d.properties.st_nm));
+
+  zoomBehavior = d3.zoom()
+    .scaleExtent([1, 10])
+    .on("zoom", event => {
+      g.attr("transform", event.transform);
+    });
+
+  svg.call(zoomBehavior);
+
+  document.getElementById("zoom-in").onclick = () =>
+    svg.transition().duration(200).call(zoomBehavior.scaleBy, 1.4);
+  document.getElementById("zoom-out").onclick = () =>
+    svg.transition().duration(200).call(zoomBehavior.scaleBy, 1 / 1.4);
+  document.getElementById("zoom-reset").onclick = () =>
+    svg.transition().duration(300).call(zoomBehavior.transform, d3.zoomIdentity);
+}
+
+// ---------- tooltip ----------
+
+function showTooltip(event, d) {
+  const resolved = resolveStateName(d.properties.st_nm);
+  const info = STATE_DATA[resolved];
+  const rect = mapCanvas.getBoundingClientRect();
+  tooltip.hidden = false;
+  tooltip.style.left = (event.clientX - rect.left) + "px";
+  tooltip.style.top = (event.clientY - rect.top) + "px";
+  tooltip.innerHTML = info
+    ? `${resolved}<br><span class="tooltip-sub">${info.majorReligion} majority</span>`
+    : `${d.properties.st_nm}`;
+}
+
+function hideTooltip() {
+  tooltip.hidden = true;
+}
+
+
+function selectState(rawName) {
+  selectedName = rawName;
+  g.selectAll("path").classed("selected", d => d.properties.st_nm === rawName);
+  renderDetail(rawName);
+}
+
+function renderDetail(rawName) {
+  const resolved = resolveStateName(rawName);
+  const info = STATE_DATA[resolved];
+
+  if (!info) {
+    detailPanel.innerHTML = `
+      <div class="detail-empty">
+        <p><strong>${rawName}</strong><br>No data on file for this region yet.</p>
+      </div>`;
+    return;
+  }
+
+  const religionRows = Object.entries(info.religions)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, pct]) => `
+      <div class="bar-row">
+        <span class="bar-label">${name}</span>
+        <span class="bar-track"><span class="bar-fill" style="width:${pct}%;background-color:${religionColor(name)}"></span></span>
+        <span class="bar-pct">${pct}%</span>
+      </div>`).join("");
+
+  const langTags = info.languages
+    .map(l => `<span class="lang-tag">${l}</span>`).join("");
+
+  detailPanel.innerHTML = `
+    <div class="detail-header">
+      <h2>${resolved}</h2>
+      <span class="religion-badge" style="background-color:${religionColor(info.majorReligion)}">
+        <span class="dot"></span>${info.majorReligion}
+      </span>
+    </div>
+    <div class="detail-meta">
+      <div><span class="label">Capital</span><span class="value">${info.capital}</span></div>
+      <div><span class="label">Population</span><span class="value">${info.population}</span></div>
+    </div>
+    <div class="detail-section">
+      <h3>Religion breakdown</h3>
+      ${religionRows}
+    </div>
+    <div class="detail-section">
+      <h3>Languages spoken</h3>
+      <div class="lang-tags">${langTags}</div>
+    </div>
+  `;
+}
+
 
 function applyFilters() {
-  const filters = currentFilters();
-  let visibleCount = 0;
+  const query = searchEl.value.trim().toLowerCase();
 
-  REGIONS.forEach(region => {
-    const match = regionMatches(region, filters);
-    if (match) visibleCount++;
+  g.selectAll("path").classed("dimmed", d => {
+    const resolved = resolveStateName(d.properties.st_nm);
+    const info = STATE_DATA[resolved];
 
-    const dot = svg.querySelector(`circle[data-id="${region.id}"]`);
-    const label = svg.querySelector(`text[data-id="${region.id}"]`);
-
-    dot.classList.toggle("dimmed", !match);
-    label.classList.toggle("dimmed", !match);
+    if (activeReligion && (!info || info.majorReligion !== activeReligion)) return true;
+    if (activeLanguage && (!info || !info.languages.includes(activeLanguage))) return true;
+    if (query && !resolved.toLowerCase().includes(query)) return true;
+    return false;
   });
-
-  const anyFilterActive = filters.religion || filters.language || filters.search;
-  matchCount.textContent = anyFilterActive
-    ? `${visibleCount} of ${REGIONS.length} regions match`
-    : `${REGIONS.length} regions total`;
 }
 
-religionFilter.addEventListener("change", applyFilters);
-languageFilter.addEventListener("change", applyFilters);
-searchBox.addEventListener("input", applyFilters);
-
-resetBtn.addEventListener("click", () => {
-  religionFilter.value = "";
-  languageFilter.value = "";
-  searchBox.value = "";
+languageFilterEl.addEventListener("change", () => {
+  activeLanguage = languageFilterEl.value;
   applyFilters();
 });
 
-applyFilters();
+searchEl.addEventListener("input", applyFilters);
 
+resetBtn.addEventListener("click", () => {
+  activeReligion = "";
+  activeLanguage = "";
+  searchEl.value = "";
+  languageFilterEl.value = "";
+  buildReligionChips();
+  applyFilters();
+});
 
-function selectRegion(id) {
-  selectedId = id;
-
-  svg.querySelectorAll(".region-dot").forEach(d => {
-    d.classList.toggle("selected", d.dataset.id === id);
-  });
-
-  const region = REGIONS.find(r => r.id === id);
-  renderInfoPanel(region);
-}
-
-function infoRow(label, value) {
-  const row = document.createElement("div");
-  row.className = "info-row";
-  const strong = document.createElement("strong");
-  strong.textContent = label;
-  row.appendChild(strong);
-  row.appendChild(document.createTextNode(value));
-  return row;
-}
-
-function renderInfoPanel(region) {
-  infoPanel.innerHTML = "";
-
-  const title = document.createElement("h2");
-  title.textContent = region.name;
-  infoPanel.appendChild(title);
-
-  const country = document.createElement("div");
-  country.className = "info-country";
-  country.textContent = region.country;
-  infoPanel.appendChild(country);
-
-  infoPanel.appendChild(infoRow("Capital", region.capital));
-  infoPanel.appendChild(infoRow("Population (approx.)", region.population));
-  infoPanel.appendChild(infoRow("Majority religion", region.majorReligion));
-
-  // religion breakdown bars
-  const relWrap = document.createElement("div");
-  relWrap.className = "info-row";
-  const relLabel = document.createElement("strong");
-  relLabel.textContent = "Religion breakdown";
-  relWrap.appendChild(relLabel);
-
-  Object.entries(region.religions).forEach(([name, pct]) => {
-    const row = document.createElement("div");
-    row.className = "bar-row";
-
-    const nameSpan = document.createElement("span");
-    nameSpan.style.width = "78px";
-    nameSpan.style.flexShrink = "0";
-    nameSpan.textContent = name;
-
-    const track = document.createElement("div");
-    track.className = "bar-track";
-    const fill = document.createElement("div");
-    fill.className = "bar-fill";
-    fill.style.width = pct + "%";
-    fill.style.backgroundColor = religionColor(name);
-    track.appendChild(fill);
-
-    const pctSpan = document.createElement("span");
-    pctSpan.style.width = "32px";
-    pctSpan.style.flexShrink = "0";
-    pctSpan.style.textAlign = "right";
-    pctSpan.textContent = pct + "%";
-
-    row.appendChild(nameSpan);
-    row.appendChild(track);
-    row.appendChild(pctSpan);
-    relWrap.appendChild(row);
-  });
-
-  infoPanel.appendChild(relWrap);
-
-  // languages
-  const langWrap = document.createElement("div");
-  langWrap.className = "info-row";
-  const langLabel = document.createElement("strong");
-  langLabel.textContent = "Languages";
-  langWrap.appendChild(langLabel);
-
-  region.languages.forEach(l => {
-    const tag = document.createElement("span");
-    tag.className = "lang-tag";
-    tag.textContent = l;
-    langWrap.appendChild(tag);
-  });
-
-  infoPanel.appendChild(langWrap);
-}
+window.addEventListener("resize", () => {
+  
+  const data = g.selectAll("path").data();
+  if (data.length) drawMap({ type: "FeatureCollection", features: data });
+});
