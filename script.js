@@ -1,6 +1,27 @@
+//clara jarvis, 2026. :)
+const TOPOLOGY_URLS = [
+  "https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@2884453/topojson/india.json",
+  "https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@main/topojson/india.json",
+  "https://raw.githubusercontent.com/udit-001/india-maps-data/main/topojson/india.json",
+  "https://cdn.statically.io/gh/udit-001/india-maps-data/main/topojson/india.json"
+];
 
-
-const TOPOLOGY_URL = "https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@2884453/topojson/india.json";
+async function fetchTopology() {
+  const errors = [];
+  for (const url of TOPOLOGY_URLS) {
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+      const json = await res.json();
+      if (!json || !json.objects) throw new Error(`Unexpected response shape from ${url}`);
+      return json;
+    } catch (err) {
+      console.warn("Map source failed, trying next mirror:", url, err);
+      errors.push(`${url} → ${err.message}`);
+    }
+  }
+  throw new Error("All map sources failed:\n" + errors.join("\n"));
+}
 
 const svg = d3.select("#map");
 const g = svg.append("g").attr("class", "states-layer");
@@ -71,11 +92,11 @@ buildLanguageOptions();
 buildLegend();
 
 
-fetch(TOPOLOGY_URL)
-  .then(res => res.json())
+fetchTopology()
   .then(topology => {
-    const districtsObj = topology.objects.districts;
-    const geoms = districtsObj.geometries;
+
+    const objectKey = topology.objects.districts ? "districts" : Object.keys(topology.objects)[0];
+    const geoms = topology.objects[objectKey].geometries;
 
     // Group district geometries by their state name
     const byState = new Map();
@@ -85,6 +106,7 @@ fetch(TOPOLOGY_URL)
       if (!byState.has(name)) byState.set(name, []);
       byState.get(name).push(geom);
     });
+
 
     const features = [];
     byState.forEach((stateGeoms, name) => {
@@ -96,15 +118,22 @@ fetch(TOPOLOGY_URL)
       });
     });
 
+    if (!features.length) throw new Error("Topology loaded but contained no usable state geometry.");
+
     const featureCollection = { type: "FeatureCollection", features };
     drawMap(featureCollection);
   })
   .catch(err => {
     mapCanvas.innerHTML =
-      '<p style="padding:40px;text-align:center;color:#8a3b3b;">' +
-      "Could not load the map data. Please check your connection and reload." +
-      "</p>";
-    console.error(err);
+      '<div style="padding:40px;text-align:center;color:#8a3b3b;">' +
+      "<p>Could not load the map data. This map fetches its boundary " +
+      "data live from a public CDN, so it needs an internet connection " +
+      "and for that CDN not to be blocked (by a firewall, ad blocker, " +
+      "or offline preview tool).</p>" +
+      '<pre style="white-space:pre-wrap;text-align:left;max-width:520px;margin:16px auto 0;font-size:11px;color:#a05a5a;">' +
+      String(err && err.message ? err.message : err) +
+      "</pre></div>";
+    console.error("Map load failed:", err);
   });
 
 function drawMap(featureCollection) {
@@ -115,7 +144,8 @@ function drawMap(featureCollection) {
   svg.attr("viewBox", `0 0 ${width} ${height}`);
 
   projection = d3.geoMercator().fitSize([width * 0.94, height * 0.94], featureCollection);
-
+  // recenter after fitSize's implicit translate (fitSize already centers to [0,0]-ish box;
+  // nudge into the middle of the actual canvas with a small margin)
   const [[x0, y0], [x1, y1]] = d3.geoPath(projection).bounds(featureCollection);
   const usedW = x1 - x0, usedH = y1 - y0;
   const offsetX = (width - usedW) / 2 - x0;
@@ -158,7 +188,6 @@ function drawMap(featureCollection) {
     svg.transition().duration(300).call(zoomBehavior.transform, d3.zoomIdentity);
 }
 
-// ---------- tooltip ----------
 
 function showTooltip(event, d) {
   const resolved = resolveStateName(d.properties.st_nm);
@@ -261,7 +290,6 @@ resetBtn.addEventListener("click", () => {
 });
 
 window.addEventListener("resize", () => {
-  
   const data = g.selectAll("path").data();
   if (data.length) drawMap({ type: "FeatureCollection", features: data });
 });
