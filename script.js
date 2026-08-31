@@ -1,4 +1,14 @@
-//clara jarvis, 2026. :)
+//clara jarvis 2026 :) hii
+
+if (typeof d3 === "undefined" || typeof topojson === "undefined") {
+  document.getElementById("map-canvas").innerHTML =
+    '<div style="padding:40px;text-align:center;color:#8a3b3b;">' +
+    "<p>The D3 / TopoJSON libraries didn't load from the CDN — " +
+    "check your connection, or that an ad blocker isn't blocking " +
+    "cdnjs.cloudflare.com, then reload.</p></div>";
+  throw new Error("Required libraries (d3, topojson) not found on window.");
+}
+
 const TOPOLOGY_URLS = [
   "https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@2884453/topojson/india.json",
   "https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@main/topojson/india.json",
@@ -94,11 +104,10 @@ buildLegend();
 
 fetchTopology()
   .then(topology => {
-
+    
     const objectKey = topology.objects.districts ? "districts" : Object.keys(topology.objects)[0];
     const geoms = topology.objects[objectKey].geometries;
 
-    // Group district geometries by their state name
     const byState = new Map();
     geoms.forEach(geom => {
       const name = geom.properties && geom.properties.st_nm;
@@ -106,7 +115,6 @@ fetchTopology()
       if (!byState.has(name)) byState.set(name, []);
       byState.get(name).push(geom);
     });
-
 
     const features = [];
     byState.forEach((stateGeoms, name) => {
@@ -144,8 +152,7 @@ function drawMap(featureCollection) {
   svg.attr("viewBox", `0 0 ${width} ${height}`);
 
   projection = d3.geoMercator().fitSize([width * 0.94, height * 0.94], featureCollection);
-  // recenter after fitSize's implicit translate (fitSize already centers to [0,0]-ish box;
-  // nudge into the middle of the actual canvas with a small margin)
+
   const [[x0, y0], [x1, y1]] = d3.geoPath(projection).bounds(featureCollection);
   const usedW = x1 - x0, usedH = y1 - y0;
   const offsetX = (width - usedW) / 2 - x0;
